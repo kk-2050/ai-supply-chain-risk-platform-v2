@@ -5,6 +5,7 @@
 ![Google Sheets](https://img.shields.io/badge/Storage-Google%20Sheets-blue)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 [![Presentation](https://img.shields.io/badge/Presentation-Gamma-blueviolet)](https://gamma.app/docs/AI-Supply-Chain-Risk-Intelligence-Platform-v2-mes7lpn3hd76t6b)
+[![GitHub Pages](https://img.shields.io/badge/Live%20Site-GitHub%20Pages-blue)](https://kk-2050.github.io/ai-supply-chain-risk-platform-v2/)
 
 An end-to-end AI-powered supply chain risk monitoring and alerting platform. Automatically detects, analyzes, scores, and routes supply chain risk events from live RSS news feeds — designed as an **operational decision-support system**, not just a technical automation demo.
 
