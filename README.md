@@ -4,6 +4,7 @@
 ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-green)
 ![Google Sheets](https://img.shields.io/badge/Storage-Google%20Sheets-blue)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+[![Presentation](https://img.shields.io/badge/Presentation-Gamma-blueviolet)](https://gamma.app/docs/AI-Supply-Chain-Risk-Intelligence-Platform-v2-mes7lpn3hd76t6b)
 
 An end-to-end AI-powered supply chain risk monitoring and alerting platform. Automatically detects, analyzes, scores, and routes supply chain risk events from live RSS news feeds — designed as an **operational decision-support system**, not just a technical automation demo.
 
