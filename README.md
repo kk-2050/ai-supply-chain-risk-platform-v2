@@ -25,7 +25,7 @@ https://kk-2050.github.io/ai-supply-chain-risk-platform-v2/
 ## Presentation
 
 Gamma Presentation:
-https://your-gamma-link
+[https://your-gamma-link](https://gamma.app/docs/AI-Supply-Chain-Risk-Intelligence-Platform-v2-mes7lpn3hd76t6b)
 
 ---
 
