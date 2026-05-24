@@ -15,6 +15,20 @@ An end-to-end AI-powered supply chain risk monitoring and alerting platform. Aut
 
 ---
 
+## Live Demo
+
+Dashboard:
+https://kk-2050.github.io/ai-supply-chain-risk-platform-v2/
+
+---
+
+## Presentation
+
+Gamma Presentation:
+https://your-gamma-link
+
+---
+
 ## Architecture Overview
 
 ![Architecture](architecture/supply_chain_risk_platform_architecture.svg)
