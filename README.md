@@ -186,7 +186,6 @@ ai-supply-chain-risk-platform-v2/
 ├── README.md
 ├── workflow-json/          n8n workflow exports (Critical Alert + Summary)
 ├── docs/                   Data dictionary, methodology, architecture docs
-
 ├── dashboard/              GitHub Pages HTML prototype dashboard
 ├── screenshots/            Email and workflow screenshots
 ├── sql/                    SQL Server prototype table designs
