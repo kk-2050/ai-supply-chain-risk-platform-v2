@@ -1,0 +1,515 @@
+{
+  "name": "AI Supply Chain Risk Platform v2 - Operational Summary Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 5
+            },
+            {
+              "triggerAtHour": 14
+            }
+          ]
+        }
+      },
+      "id": "6924f952-d740-4020-9202-156834490f0b",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1776,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allEvents = $('Prepare Summary Events').first().json.all_events || [];\n\nreturn allEvents.map(event => ({\n  json: {\n    row_number: event.row_number,\n    summary_status: 'sent',\n    summary_sent_at: new Date().toISOString()\n  }\n}));;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        176
+      ],
+      "id": "83af340f-bec0-423a-92df-921ad8b8cdf1",
+      "name": "Prepare Rows For Update"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ",
+          "mode": "list",
+          "cachedResultName": "risk_events",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1488,
+        176
+      ],
+      "id": "bb44d985-76f3-4d69-b664-94edf756c4ce",
+      "name": "Get Summary Events From Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "LH8SO7v8lkxcdq9T",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst now = new Date();\n\nconst filtered = items.filter(item => {\n  const alertLevel = item.json.alert_level || '';\n  const status = item.json.summary_status || '';\n  const eventDate = item.json.event_date;\n\n  if (alertLevel !== 'summary') return false;\n  if (status !== 'pending') return false;\n\n  if (eventDate) {\n    const eventTime = new Date(eventDate);\n    const hoursOld = (now - eventTime) / (1000 * 60 * 60);\n\n    // 本番用：直近48時間のみ\n    if (hoursOld > 48) return false;\n  }\n\n  return true;\n});\n\nconst events = filtered.map(item => ({\n  row_number: item.json.row_number,\n  event_date: item.json.event_date,\n  supplier_name: item.json.supplier_name,\n  risk_title: item.json.risk_title,\n  risk_category: item.json.risk_category,\n  overall_risk_score: item.json.overall_risk_score,\n  ai_summary: item.json.ai_summary,\n  recommended_action: item.json.recommended_action,\n  source_url: (item.json.source_url || '').split('?')[0] || item.json.source_url\n}));\n\n// AI用：上位3件のみ\nconst limitedEvents = events.slice(0, 3);\n\nconst promptText = `You are a Supply Chain Risk Analyst.\n\nUse ONLY the data provided below.\nNever invent suppliers, risks, scores, summaries, or URLs.\n\nInput Events:\n${JSON.stringify(limitedEvents, null, 2)}\n\nGenerate the following sections using ONLY the above data:\n\n1. Executive Summary\n\n2. Top Risks\n\n3. Recommended Actions\n\nIMPORTANT EMAIL FORMATTING RULES:\n\n- Do NOT use markdown symbols like #, ##, ###, *, or -\n- Use short readable paragraphs\n- Add blank lines between sections\n- Keep formatting readable in Gmail HTML emails\n- Use professional executive business English\n- Keep the summary concise and readable\n- Do NOT repeat the same sentence patterns\n- Do NOT generate fake examples\n- Use actual supplier names from Input Events\n- Use actual risk titles from Input Events\n- Use actual scores from Input Events\n\nFor Top Risks include:\n- Supplier Name\n- Risk Title\n- Overall Risk Score\n- One-line Operational Impact\n\nFor Recommended Actions:\n- Use ONLY the provided recommended_action values\n- Summarize similar actions when possible\n\nKeep the final output concise enough for executive email reading.`;\n\nreturn [{\n  json: {\n    event_count: events.length,\n    all_events: events,\n    prompt_text: promptText\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1216,
+        176
+      ],
+      "id": "33c86bd7-2492-486d-94f6-52a8292d58e9",
+      "name": "Prepare Summary Events"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{$json.prompt_text}}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -1008,
+        176
+      ],
+      "id": "d8d4d8c4-de2d-44b7-88c9-6a914f01db8f",
+      "name": "Generate AI Executive Summary",
+      "credentials": {
+        "openAiApi": {
+          "id": "kA9mS5H3GRsW03H8",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json.output?.[0]?.content?.[0]?.text || '';\nconst allEvents = $('Prepare Summary Events').first().json.all_events || [];\n\nconst tableRows = allEvents.map((e, i) => `\n  <tr>\n    <td style=\"padding:6px;border:1px solid #ddd\">${i + 1}</td>\n    <td style=\"padding:6px;border:1px solid #ddd\">${e.event_date || ''}</td>\n    <td style=\"padding:6px;border:1px solid #ddd\">${e.supplier_name || ''}</td>\n    <td style=\"padding:6px;border:1px solid #ddd\">${e.risk_title || ''}</td>\n    <td style=\"padding:6px;border:1px solid #ddd\">${e.risk_category || ''}</td>\n    <td style=\"padding:6px;border:1px solid #ddd\">${e.overall_risk_score || ''}</td>\n    <td style=\"padding:6px;border:1px solid #ddd\">\n      <a href=\"${e.source_url || ''}\">[Link]</a>\n    </td>\n  </tr>\n`).join('');\n\nconst emailBody = `\n<h2>📊 Daily Supply Chain Risk Summary</h2>\n<p><i>Generated by AI Supply Chain Risk Intelligence Platform</i></p>\n<hr>\n\n<h3>🤖 AI Executive Summary</h3>\n<div style=\"white-space: pre-wrap; line-height:1.6; font-family:Arial,sans-serif;\">\n${aiOutput\n  .replace(/Executive Summary/g, '<b>1. Executive Summary</b>')\n  .replace(/Top Risks/g, '<b>2. Top Risks</b>')\n  .replace(/Recommended Actions/g, '<b>3. Recommended Actions</b>')}\n</div>\n\n<hr>\n\n<h3>📋 Source Events (Verified Data)</h3>\n<table style=\"border-collapse:collapse;width:100%;font-size:13px\">\n  <thead>\n    <tr style=\"background:#f2f2f2\">\n      <th style=\"padding:6px;border:1px solid #ddd\">#</th>\n      <th style=\"padding:6px;border:1px solid #ddd\">Date</th>\n      <th style=\"padding:6px;border:1px solid #ddd\">Supplier</th>\n      <th style=\"padding:6px;border:1px solid #ddd\">Risk Title</th>\n      <th style=\"padding:6px;border:1px solid #ddd\">Category</th>\n      <th style=\"padding:6px;border:1px solid #ddd\">Score</th>\n      <th style=\"padding:6px;border:1px solid #ddd\">Source</th>\n    </tr>\n  </thead>\n  <tbody>\n    ${tableRows}\n  </tbody>\n</table>\n\n<hr>\n<p><i>This email was sent automatically by AI Supply Chain Risk Intelligence Platform</i></p>\n`;\n\nreturn [{\n  json: {\n    email_body: emailBody,\n    event_count: allEvents.length\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        176
+      ],
+      "id": "07575142-dc27-4e34-9102-24c6a216cc8b",
+      "name": "Build HTML Email"
+    },
+    {
+      "parameters": {
+        "sendTo": "kssweets8@gmail.com",
+        "subject": "=📊 Supply Chain Risk Summary | {{ $now.hour < 12 ? '5AM Cycle' : '2PM Cycle' }} | Generated at {{ $now.format('yyyy-MM-dd HH:mm') }} CT",
+        "message": "={{ $json.email_body }}",
+        "options": {}
+      },
+      "id": "761fdc6e-45bc-425c-9cb1-cba6d218c3a6",
+      "name": "Send Summary Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        176
+      ],
+      "webhookId": "0716e668-b5ff-4cf5-8fe8-a4348e768a49",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PzLj7u8rthD8eeUH",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ",
+          "mode": "list",
+          "cachedResultName": "risk_events",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{$json.row_number}}",
+            "summary_status": "={{$json.summary_status}}",
+            "summary_sent_at": "={{$json.summary_sent_at}}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "event_date",
+              "displayName": "event_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "supplier_id",
+              "displayName": "supplier_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "supplier_name",
+              "displayName": "supplier_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "risk_title",
+              "displayName": "risk_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "risk_category",
+              "displayName": "risk_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "severity_score",
+              "displayName": "severity_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "operational_impact_score",
+              "displayName": "operational_impact_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urgency_score",
+              "displayName": "urgency_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "overall_risk_score",
+              "displayName": "overall_risk_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "confidence_score",
+              "displayName": "confidence_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_summary",
+              "displayName": "ai_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "recommended_action",
+              "displayName": "recommended_action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_type",
+              "displayName": "source_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_url",
+              "displayName": "source_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processed_at",
+              "displayName": "processed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "alert_level",
+              "displayName": "alert_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary_status",
+              "displayName": "summary_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary_sent_at",
+              "displayName": "summary_sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "critical_alert_status",
+              "displayName": "critical_alert_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "critical_alert_sent_at",
+              "displayName": "critical_alert_sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processing_status",
+              "displayName": "processing_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dedupe_key",
+              "displayName": "dedupe_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -48,
+        176
+      ],
+      "id": "28cae212-b93d-4894-86f1-6a11d0f15fed",
+      "name": "Update Summary Status",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "LH8SO7v8lkxcdq9T",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Summary Events From Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Summary Events From Sheet": {
+      "main": [
+        [
+          {
+            "node": "Prepare Summary Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Summary Events": {
+      "main": [
+        [
+          {
+            "node": "Generate AI Executive Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate AI Executive Summary": {
+      "main": [
+        [
+          {
+            "node": "Build HTML Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build HTML Email": {
+      "main": [
+        [
+          {
+            "node": "Send Summary Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Summary Email": {
+      "main": [
+        [
+          {
+            "node": "Prepare Rows For Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Rows For Update": {
+      "main": [
+        [
+          {
+            "node": "Update Summary Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "0e1acf65-465f-4c55-b70a-fa5d8fb26227",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ee5daa325b3f448f877bf7d6d666ab970928312cd2aa48e93185c0c23464926b"
+  },
+  "id": "Xh7opsT0OnvnWEIs",
+  "tags": []
+}
