@@ -17,13 +17,13 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        -2112,
-        48
+        912,
+        -128
       ]
     },
     {
       "parameters": {
-        "url": "https://news.google.com/rss/search?q=supply%20chain%20supplier%20shortage%20semiconductor&hl=en-US&gl=US&ceid=US:en",
+        "url": "https://news.google.com/rss/search?q=supply%20chain%20supplier%20shortage%20semiconductor%20when%3A2d&hl=en-US&gl=US&ceid=US:en",
         "options": {}
       },
       "id": "b0cea421-9cdb-415f-a044-7c6bcaf1df83",
@@ -31,65 +31,66 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1888,
-        48
+        1136,
+        -128
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Supplier list (fictional - for portfolio demonstration)\nconst suppliers = [\n  { id: 1, name: 'Apex Components Ltd', keywords: ['apex components', 'capacitor', 'inductor'] },\n  { id: 2, name: 'Nova Auto Parts Co', keywords: ['nova auto', 'automotive', 'auto parts', 'vehicle'] },\n  { id: 3, name: 'BioSource Materials', keywords: ['biosource', 'pharmaceutical', 'api ingredient', 'chemical'] },\n  { id: 4, name: 'ChipTech Global', keywords: ['chiptech', 'semiconductor', 'gpu', 'chip', 'microchip'] },\n  { id: 5, name: 'FastRoute Logistics', keywords: ['fastroute', 'logistics', 'freight', 'port', 'shipping'] }\n];\n\nconst rawText = $input.first().json.data || '';\n\n// Extract RSS item blocks\nconst items = rawText.match(/<item>[\\s\\S]*?<\\/item>/g) || [];\n\nfunction cleanXml(text) {\n  if (!text) return '';\n  return text\n    .replace(/<!\\[CDATA\\[/g, '')\n    .replace(/\\]\\]>/g, '')\n    .replace(/<[^>]*>/g, '')\n    .replace(/&amp;/g, '&')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction extractTag(item, tag) {\n  const regex = new RegExp(`<${tag}[^>]*>([\\\\s\\\\S]*?)<\\\\/${tag}>`, 'i');\n  const match = item.match(regex);\n  return match ? cleanXml(match[1]) : '';\n}\n\nconst results = [];\n\nfor (const item of items.slice(0, 10)) {\n  const title = extractTag(item, 'title');\n  const description = extractTag(item, 'description');\n  const link = extractTag(item, 'link');\n  const pubDate = extractTag(item, 'pubDate');\n\n  // Age filter: Critical workflow only processes articles from the last 24 hours\n  if (pubDate) {\n    const published = new Date(pubDate);\n    const now = new Date();\n    const hoursOld = (now - published) / (1000 * 60 * 60);\n\n    if (Number.isFinite(hoursOld) && hoursOld > 24) {\n      continue;\n    }\n  }\n\n  const combinedText = `${title}. ${description}`;\n  const lower = combinedText.toLowerCase();\n\n  let matchedSupplier = null;\n\n  for (const s of suppliers) {\n    if (s.keywords.some(k => lower.includes(k))) {\n      matchedSupplier = s;\n      break;\n    }\n  }\n\n  // Broad supply chain keywords for demo matching\n  if (!matchedSupplier && /semiconductor|supply chain|shortage|logistics|shipping|automotive|pharma|tariff|port/.test(lower)) {\n    matchedSupplier = suppliers.find(s => s.name === 'ChipTech Global') || suppliers[3];\n  }\n\n  if (matchedSupplier) {\n    results.push({\n      json: {\n        supplier_id: matchedSupplier.id,\n        supplier_name: matchedSupplier.name,\n        risk_title: title,\n        raw_text: combinedText,\n        source_type: 'rss',\n        source_url: link || 'https://news.google.com/rss',\n        event_date: pubDate ? new Date(pubDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]\n      }\n    });\n  }\n}\n//---------------------------------------------------------------------------\n//Fallback\n// if (results.length === 0) {\n//   results.push({\n//     json: {\n//       supplier_id: 4,\n//       supplier_name: 'ChipTech Global',\n//       risk_title: 'Sample semiconductor supply disruption',\n//       raw_text: 'Sample: ChipTech Global reported a major semiconductor production shutdown in Taiwan. The disruption may delay critical microchip shipments for automotive and electronics customers.',\n//       source_type: 'rss',\n//       source_url: 'https://example.com/sample-news',\n//       event_date: new Date().toISOString().split('T')[0]\n//     }\n//   });\n// }\n\nreturn results;"
+        "jsCode": "// Supplier list (fictional - for portfolio demonstration)\nconst suppliers = [\n  { id: 1, name: 'Apex Components Ltd', keywords: ['apex components', 'capacitor', 'inductor'] },\n  { id: 2, name: 'Nova Auto Parts Co', keywords: ['nova auto', 'automotive', 'auto parts', 'vehicle'] },\n  { id: 3, name: 'BioSource Materials', keywords: ['biosource', 'pharmaceutical', 'api ingredient', 'chemical'] },\n  { id: 4, name: 'ChipTech Global', keywords: ['chiptech', 'semiconductor', 'gpu', 'chip', 'microchip'] },\n  { id: 5, name: 'FastRoute Logistics', keywords: ['fastroute', 'logistics', 'freight', 'port', 'shipping'] }\n];\n\nconst rawText = $input.first().json.data || '';\n\n// Extract RSS item blocks\nconst items = rawText.match(/<item>[\\s\\S]*?<\\/item>/g) || [];\n\nfunction cleanXml(text) {\n  if (!text) return '';\n  return text\n    .replace(/<!\\[CDATA\\[/g, '')\n    .replace(/\\]\\]>/g, '')\n    .replace(/<[^>]*>/g, '')\n    .replace(/&amp;/g, '&')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction extractTag(item, tag) {\n  const regex = new RegExp(`<${tag}[^>]*>([\\\\s\\\\S]*?)<\\\\/${tag}>`, 'i');\n  const match = item.match(regex);\n  return match ? cleanXml(match[1]) : '';\n}\n\nconst results = [];\n\nfor (const item of items) {\n  const title = extractTag(item, 'title');\n  const description = extractTag(item, 'description');\n  const link = extractTag(item, 'link');\n  const pubDate = extractTag(item, 'pubDate');\n\n  // Age filter: Critical workflow only processes articles from the last 48 hours\n  if (pubDate) {\n    const published = new Date(pubDate);\n    const now = new Date();\n    const hoursOld = (now - published) / (1000 * 60 * 60);\n\n    if (Number.isFinite(hoursOld) && hoursOld > 48) {\n      continue;\n    }\n  }\n\n  const combinedText = `${title}. ${description}`;\n  const lower = combinedText.toLowerCase();\n\n  let matchedSupplier = null;\n\n  for (const s of suppliers) {\n    if (s.keywords.some(k => lower.includes(k))) {\n      matchedSupplier = s;\n      break;\n    }\n  }\n\n  // Broad supply chain keywords for demo matching\n  if (!matchedSupplier && /semiconductor|supply chain|shortage|logistics|shipping|automotive|pharma|tariff|port/.test(lower)) {\n    matchedSupplier = suppliers.find(s => s.name === 'ChipTech Global') || suppliers[3];\n  }\n\n  if (matchedSupplier) {\n    results.push({\n      json: {\n        supplier_id: matchedSupplier.id,\n        supplier_name: matchedSupplier.name,\n        risk_title: title,\n        raw_text: combinedText,\n        source_type: 'rss',\n        source_url: link || 'https://news.google.com/rss',\n        event_date: pubDate ? new Date(pubDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]\n      }\n    });\n\n    if (results.length >= 50) {\n      break;\n    } \n  }\n}\n//---------------------------------------------------------------------------\n//Fallback\n// if (results.length === 0) {\n//   results.push({\n//     json: {\n//       supplier_id: 4,\n//       supplier_name: 'ChipTech Global',\n//       risk_title: 'Sample semiconductor supply disruption',\n//       raw_text: 'Sample: ChipTech Global reported a major semiconductor production shutdown in Taiwan. The disruption may delay critical microchip shipments for automotive and electronics customers.',\n//       source_type: 'rss',\n//       source_url: 'https://example.com/sample-news',\n//       event_date: new Date().toISOString().split('T')[0]\n//     }\n//   });\n// }\n\nreturn results;"
       },
       "id": "e2b105a8-c8f7-43db-884b-94742cd4d9bc",
       "name": "Match Supplier And Clean News",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1664,
-        48
+        1360,
+        -128
       ]
     },
     {
       "parameters": {
         "documentId": {
           "__rl": true,
-          "value": "1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ",
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
           "mode": "list",
           "cachedResultName": "risk_events",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit#gid=REPLACE_WITH_SHEET_GID"
         },
         "options": {}
       },
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        -1456,
-        48
+        1568,
+        -128
       ],
       "id": "34bb6fe2-442e-425b-9541-0d58f65fba3f",
       "name": "Load Risk Events Sheet",
+      "executeOnce": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "LH8SO7v8lkxcdq9T",
-          "name": "Google Sheets OAuth2 API"
+          "id": "REPLACE_WITH_GOOGLESHEETSOAUTH2API_ID",
+          "name": "Configure googleSheetsOAuth2Api credential in n8n"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// Existing URLs from Google Sheets\nconst existingUrls = $input.all().map(item => item.json.source_url);\n\n// Original RSS items from Clean and Match Supplier\nconst originalItems = $('Match Supplier And Clean News').all();\n\n// Keep only new URLs\nconst newItems = originalItems.filter(item => {\n  const url = item.json.source_url;\n  return !existingUrls.includes(url);\n});\n\nreturn newItems;"
+        "jsCode": "// Existing URLs from Google Sheets\nconst existingUrls = $input.all().map(item => item.json.source_url);\n\n// Original RSS items from Clean and Match Supplier\nconst originalItems = $('Match Supplier And Clean News').all();\n\n// Keep only new URLs\nconst newItems = originalItems.filter(item => {\n  const url = item.json.source_url;\n  return !existingUrls.includes(url);\n});\n\n\nreturn newItems;\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1232,
-        48
+        1792,
+        -128
       ],
       "id": "270cb8f8-5301-43c4-9ca3-d93c0a53d046",
       "name": "Prepare AI Risk Prompt"
@@ -120,30 +121,29 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 2.1,
       "position": [
-        -1024,
-        48
+        2000,
+        -128
       ],
       "id": "832209b0-27c1-4a5a-8165-49d94a3f8dae",
       "name": "Generate AI Risk Assessment",
       "credentials": {
         "openAiApi": {
-          "id": "kA9mS5H3GRsW03H8",
-          "name": "OpenAI account"
+          "id": "REPLACE_WITH_OPENAIAPI_ID",
+          "name": "Configure openAiApi credential in n8n"
         }
       }
     },
     {
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const input = $json;\n\nconst aiRaw =\n  input?.output?.[0]?.content?.[0]?.text ||\n  input.message?.content ||\n  input.content ||\n  input.text ||\n  input.response ||\n  JSON.stringify(input);\n\nlet aiData;\n\ntry {\n  aiData = typeof aiRaw === 'string' ? JSON.parse(aiRaw) : aiRaw;\n} catch (e) {\n  aiData = {\n    risk_title: 'Parse error - manual review needed',\n    risk_category: 'Other',\n    severity_score: 1,\n    operational_impact_score: 1,\n    urgency_score: 1,\n    confidence_score: 0,\n    ai_summary: String(aiRaw).substring(0, 200),\n    recommended_action: 'Review raw AI output manually'\n  };\n}\n\nconst supplierData = $('Match Supplier And Clean News').item.json;\n\nconst severity = Number(aiData.severity_score) || 1;\nconst impact = Number(aiData.operational_impact_score) || 1;\nconst urgency = Number(aiData.urgency_score) || 1;\n\nconst overall = (\n  severity * 0.40 +\n  impact * 0.35 +\n  urgency * 0.25\n).toFixed(2);\n\nconst rawCategory = String(aiData.risk_category || '').toLowerCase();\n\nfunction standardizeCategory(category) {\n  if (\n    category.includes('shortage') ||\n    category.includes('supply risk') ||\n    category.includes('market supply') ||\n    category.includes('material') ||\n    category.includes('resource') ||\n    category.includes('semiconductor supply') ||\n    category.includes('supply chain disruption')\n  ) {\n    return 'Supply Shortage';\n  }\n\n  if (\n    category.includes('geopolitical') ||\n    category.includes('political') ||\n    category.includes('war') ||\n    category.includes('conflict') ||\n    category.includes('sanction')\n  ) {\n    return 'Geopolitical';\n  }\n\n  if (\n    category.includes('tariff') ||\n    category.includes('trade') ||\n    category.includes('duty')\n  ) {\n    return 'Tariff';\n  }\n\n  if (\n    category.includes('logistics') ||\n    category.includes('shipping') ||\n    category.includes('freight') ||\n    category.includes('port') ||\n    category.includes('transport')\n  ) {\n    return 'Logistics';\n  }\n\n  if (\n    category.includes('financial') ||\n    category.includes('cost') ||\n    category.includes('price') ||\n    category.includes('currency')\n  ) {\n    return 'Financial';\n  }\n\n  if (\n    category.includes('cyber') ||\n    category.includes('hack') ||\n    category.includes('security')\n  ) {\n    return 'Cybersecurity';\n  }\n\n  if (\n    category.includes('natural disaster') ||\n    category.includes('earthquake') ||\n    category.includes('flood') ||\n    category.includes('typhoon') ||\n    category.includes('hurricane')\n  ) {\n    return 'Natural Disaster';\n  }\n\n  if (\n    category.includes('operational') ||\n    category.includes('shutdown') ||\n    category.includes('factory')\n  ) {\n    return 'Operational Disruption';\n  }\n\n  return 'Other';\n}\n\nconst standardCategory = standardizeCategory(rawCategory);\n\nconst processedAt = (() => {\n  const now = new Date();\n\n  const chicago = new Intl.DateTimeFormat('en-CA', {\n    timeZone: 'America/Chicago',\n    year: 'numeric',\n    month: '2-digit',\n    day: '2-digit',\n    hour: 'numeric',\n    minute: '2-digit',\n    hour12: true\n  }).format(now);\n\n  return chicago.replace(',', '') + ' CST';\n})();\n\nreturn {\n  json: {\n    supplier_id: supplierData.supplier_id,\n    supplier_name: supplierData.supplier_name,\n    source_type: supplierData.source_type,\n    source_url: supplierData.source_url,\n    event_date: supplierData.event_date,\n    risk_title: aiData.risk_title,\n    risk_category: standardCategory,\n    severity_score: severity,\n    operational_impact_score: impact,\n    urgency_score: urgency,\n    overall_risk_score: parseFloat(overall),\n    confidence_score: Number(aiData.confidence_score) || 0,\n    ai_summary: aiData.ai_summary,\n    recommended_action: aiData.recommended_action,\n    processed_at: processedAt,\n    alert_level:\n      parseFloat(overall) >= 4.5\n        ? 'critical'\n        : parseFloat(overall) >= 3.5\n        ? 'summary'\n        : 'low',\n    summary_status: 'pending',\n    summary_sent_at: '',\n    critical_alert_status:\n      parseFloat(overall) >= 4.5\n        ? 'pending'\n        : 'not_required',\n    critical_alert_sent_at: '',\n    processing_status: 'success',\n    error_message: '',\n    dedupe_key: supplierData.source_url\n  }\n};"
+        "jsCode": "// Ensure we handle multiple input items correctly by processing as an array\nreturn $input.all().map((item, index) => {\n  const input = item.json;\n\n  const aiRaw =\n    input?.output?.[0]?.content?.[0]?.text ||\n    input.message?.content ||\n    input.content ||\n    input.text ||\n    input.response ||\n    JSON.stringify(input);\n\n  let aiData;\n\n  try {\n    aiData = typeof aiRaw === 'string' ? JSON.parse(aiRaw) : aiRaw;\n  } catch (e) {\n    aiData = {\n      risk_title: 'Parse error - manual review needed',\n      risk_category: 'Other',\n      severity_score: 1,\n      operational_impact_score: 1,\n      urgency_score: 1,\n      confidence_score: 0,\n      ai_summary: String(aiRaw).substring(0, 200),\n      recommended_action: 'Review raw AI output manually'\n    };\n  }\n\n  // Safely pull the corresponding item from upstream nodes using the item index\n  let supplierData = {};\n  try {\n    supplierData = $('Prepare AI Risk Prompt').all()[index]?.json || {};\n  } catch (e) {\n    try {\n      supplierData = $('Match Supplier And Clean News').all()[index]?.json || {};\n    } catch (err) {\n      supplierData = {};\n    }\n  }\n\n  const severity = Number(aiData.severity_score) || 1;\n  const impact = Number(aiData.operational_impact_score) || 1;\n  const urgency = Number(aiData.urgency_score) || 1;\n\n  const overall = (\n    severity * 0.40 +\n    impact * 0.35 +\n    urgency * 0.25\n  ).toFixed(2);\n\n  const rawCategory = String(aiData.risk_category || '').toLowerCase();\n\n  function standardizeCategory(category) {\n    if (\n      category.includes('shortage') ||\n      category.includes('supply risk') ||\n      category.includes('market supply') ||\n      category.includes('material') ||\n      category.includes('resource') ||\n      category.includes('semiconductor supply') ||\n      category.includes('supply chain disruption')\n    ) {\n      return 'Supply Shortage';\n    }\n\n    if (\n      category.includes('geopolitical') ||\n      category.includes('political') ||\n      category.includes('war') ||\n      category.includes('conflict') ||\n      category.includes('sanction')\n    ) {\n      return 'Geopolitical';\n    }\n\n    if (\n      category.includes('tariff') ||\n      category.includes('trade') ||\n      category.includes('duty')\n    ) {\n      return 'Tariff';\n    }\n\n    if (\n      category.includes('logistics') ||\n      category.includes('shipping') ||\n      category.includes('freight') ||\n      category.includes('port') ||\n      category.includes('transport')\n    ) {\n      return 'Logistics';\n    }\n\n    if (\n      category.includes('financial') ||\n      category.includes('cost') ||\n      category.includes('price') ||\n      category.includes('currency')\n    ) {\n      return 'Financial';\n    }\n\n    if (\n      category.includes('cyber') ||\n      category.includes('hack') ||\n      category.includes('security')\n    ) {\n      return 'Cybersecurity';\n    }\n\n    if (\n      category.includes('natural disaster') ||\n      category.includes('earthquake') ||\n      category.includes('flood') ||\n      category.includes('typhoon') ||\n      category.includes('hurricane')\n    ) {\n      return 'Natural Disaster';\n    }\n\n    if (\n      category.includes('operational') ||\n      category.includes('shutdown') ||\n      category.includes('factory')\n    ) {\n      return 'Operational Disruption';\n    }\n\n    return 'Other';\n  }\n\n  const standardCategory = standardizeCategory(rawCategory);\n\n  const processedAt = (() => {\n    const now = new Date();\n\n    const chicago = new Intl.DateTimeFormat('en-CA', {\n      timeZone: 'America/Chicago',\n      year: 'numeric',\n      month: '2-digit',\n      day: '2-digit',\n      hour: 'numeric',\n      minute: '2-digit',\n      hour12: true\n    }).format(now);\n\n    return chicago.replace(',', '') + ' CST';\n  })();\n\n  // Get the reliable source URL from upstream news processors\n  const finalSourceUrl = supplierData?.source_url || input?.source_url || \"https://news.google.com\";\n\n  return {\n    json: {\n      supplier_id: supplierData?.supplier_id || \"SUPP_DEFAULT\",\n      supplier_name: supplierData?.supplier_name || \"Unknown Supplier\",\n      source_type: supplierData?.source_type || \"rss\",\n      source_url: finalSourceUrl, \n      event_date: supplierData?.event_date || new Date().toISOString().split('T')[0],\n      risk_title: aiData.risk_title,\n      risk_category: standardCategory,\n      severity_score: severity,\n      operational_impact_score: impact,\n      urgency_score: urgency,\n      overall_risk_score: parseFloat(overall),\n      confidence_score: Number(aiData.confidence_score) || 0,\n      ai_summary: aiData.ai_summary,\n      recommended_action: aiData.recommended_action,\n      processed_at: processedAt,\n      alert_level:\n        parseFloat(overall) >= 4.5\n          ? 'critical'\n          : parseFloat(overall) >= 3.5\n          ? 'summary'\n          : 'low',\n      summary_status: 'pending',\n      summary_sent_at: '',\n      critical_alert_status:\n        parseFloat(overall) >= 4.5\n          ? 'pending'\n          : 'not_required',\n      critical_alert_sent_at: '',\n      processing_status: 'success',\n      error_message: '',\n      dedupe_key: finalSourceUrl\n    }\n  };\n});"
       },
       "id": "08448392-c2d6-4213-a708-a4b49670485f",
       "name": "Parse AI Risk Output",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -672,
-        48
+        2352,
+        -128
       ]
     },
     {
@@ -151,17 +151,17 @@
         "operation": "append",
         "documentId": {
           "__rl": true,
-          "value": "1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ",
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
           "mode": "list",
           "cachedResultName": "risk_events",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit#gid=REPLACE_WITH_SHEET_GID"
         },
         "columns": {
           "mappingMode": "autoMapInputData",
@@ -293,6 +293,96 @@
               "display": true,
               "type": "string",
               "canBeUsedToMatch": true
+            },
+            {
+              "id": "processed_at",
+              "displayName": "processed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "alert_level",
+              "displayName": "alert_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary_status",
+              "displayName": "summary_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "summary_sent_at",
+              "displayName": "summary_sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "critical_alert_status",
+              "displayName": "critical_alert_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "critical_alert_sent_at",
+              "displayName": "critical_alert_sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "processing_status",
+              "displayName": "processing_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "dedupe_key",
+              "displayName": "dedupe_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -303,15 +393,15 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        -464,
-        48
+        2560,
+        -128
       ],
       "id": "ec1998b1-b0c1-4a3c-b289-6030f622c5f6",
       "name": "Save Risk Event To Sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "LH8SO7v8lkxcdq9T",
-          "name": "Google Sheets OAuth2 API"
+          "id": "REPLACE_WITH_GOOGLESHEETSOAUTH2API_ID",
+          "name": "Configure googleSheetsOAuth2Api credential in n8n"
         }
       }
     },
@@ -344,15 +434,15 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -256,
-        48
+        2768,
+        -128
       ]
     },
     {
       "parameters": {
-        "sendTo": "kssweets8@gmail.com",
+        "sendTo": "portfolio-alert-recipient@example.com",
         "subject": "=🚨 [{{ $json.alert_level.toUpperCase() }}] Supply Chain Risk Alert: {{ $json.supplier_name }} - Score {{ $json.overall_risk_score }}",
-        "message": "==<h2>Supply Chain Risk Alert</h2>\n\n<p><b>Supplier:</b> {{ $json.supplier_name }}</p>\n<p><b>Risk:</b> {{ $json.risk_title }}</p>\n<p><b>Category:</b> {{ $json.risk_category }}</p>\n<p><b>Overall Risk Score:</b> {{ $json.overall_risk_score }} / 5.0</p>\n\n<hr>\n\n<p><b>AI Summary:</b><br>{{ $json.ai_summary }}</p>\n<p><b>Recommended Action:</b><br>{{ $json.recommended_action }}</p>\n\n<hr>\n\n<p><b>Source Article:</b><br><a href=\"{{ $json.source_url }}\">Open Source Article</a></p>\n<p><b>Detected At:</b><br>{{ $json.processed_at }}</p>\n\n<hr>\n\n<p><i>Generated by AI Supply Chain Risk Intelligence Platform</i></p>",
+        "message": "=<h2>Supply Chain Risk Alert</h2>\n\n<p><b>Supplier:</b> {{ $json.supplier_name }}</p>\n<p><b>Risk:</b> {{ $json.risk_title }}</p>\n<p><b>Category:</b> {{ $json.risk_category }}</p>\n<p><b>Overall Risk Score:</b> {{ $json.overall_risk_score }} / 5.0</p>\n\n<hr>\n\n<p><b>AI Summary:</b><br>{{ $json.ai_summary }}</p>\n\n<p><b>Recommended Action:</b><br>{{ $json.recommended_action }}</p>\n\n<hr>\n\n<p><b>Source URL (Debug):</b><br>\n{{ $json.source_url }}\n</p>\n\n<p><b>Source Article:</b><br>\n<a href=\"{{ $json.source_url }}\" target=\"_blank\">\nOpen Source Article\n</a>\n</p>\n\n<p><b>Detected At:</b><br>{{ $json.processed_at }}</p>\n\n<hr>\n\n<p><i>Generated by AI Supply Chain Risk Intelligence Platform</i></p>",
         "options": {}
       },
       "id": "f1dbe8f2-9c2d-488c-9903-2fdf91721b06",
@@ -360,14 +450,14 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        0,
-        -112
+        3024,
+        -288
       ],
-      "webhookId": "d9454133-945b-461d-9fea-de04cb1e6a0c",
+      "webhookId": "REPLACE_WITH_WEBHOOK_ID",
       "credentials": {
         "gmailOAuth2": {
-          "id": "PzLj7u8rthD8eeUH",
-          "name": "Gmail OAuth2 API"
+          "id": "REPLACE_WITH_GMAILOAUTH2_ID",
+          "name": "Configure gmailOAuth2 credential in n8n"
         }
       }
     },
@@ -439,8 +529,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        0,
-        192
+        3024,
+        16
       ],
       "disabled": true
     },
@@ -451,8 +541,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        208,
-        -112
+        3232,
+        -288
       ],
       "id": "bbaa3c30-0489-4dcd-83b8-90da7c62b1af",
       "name": "Prepare Critical Alert Update"
@@ -462,17 +552,17 @@
         "operation": "update",
         "documentId": {
           "__rl": true,
-          "value": "1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ",
+          "value": "REPLACE_WITH_GOOGLE_SHEET_ID",
           "mode": "list",
           "cachedResultName": "risk_events",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ/edit?usp=drivesdk"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit"
         },
         "sheetName": {
           "__rl": true,
           "value": "gid=0",
           "mode": "list",
           "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-fE9-28SyBdpfEGrnjIriiJQcezZ-NokwKbjcBVInHQ/edit#gid=0"
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/REPLACE_WITH_GOOGLE_SHEET_ID/edit#gid=REPLACE_WITH_SHEET_GID"
         },
         "columns": {
           "mappingMode": "defineBelow",
@@ -733,15 +823,15 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        416,
-        -112
+        3440,
+        -288
       ],
       "id": "69ba80e8-0cf0-4d5e-9b65-7b5ad3d3207c",
       "name": "Update Critical Alert Status",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "LH8SO7v8lkxcdq9T",
-          "name": "Google Sheets OAuth2 API"
+          "id": "REPLACE_WITH_GOOGLESHEETSOAUTH2API_ID",
+          "name": "Configure googleSheetsOAuth2Api credential in n8n"
         }
       }
     }
@@ -883,11 +973,12 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "0af64247-1301-4038-9d7a-87dff9fea53b",
+  "versionId": "PUBLIC_TEMPLATE_VERSION_ID",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "ee5daa325b3f448f877bf7d6d666ab970928312cd2aa48e93185c0c23464926b"
+    "instanceId": "REPLACE_WITH_N8N_INSTANCE_ID"
   },
-  "id": "ZVsT30IzssyouJkB",
+  "nodeGroups": [],
+  "id": "PUBLIC_TEMPLATE_WORKFLOW_ID",
   "tags": []
 }
